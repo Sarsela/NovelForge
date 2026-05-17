@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Чтение — NovelForge</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <a href="index.html" class="btn btn-outline-light">← На главную</a>
+            <h1 class="text-white m-0"><i class="bi bi-book"></i> Чтение</h1>
+            <div style="width: 100px;"></div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                <div class="preview-box" id="readerContainer">
+                    <div id="progressBar" class="progress-bar-custom mb-3" style="display: none;">
+                        <div class="progress-fill" id="progressFill" style="width: 0%;"></div>
+                    </div>
+                    <div id="sceneImage" class="text-center mb-3 p-3 bg-dark rounded" style="min-height: 150px;">🎨</div>
+                    <div id="sceneDialogue" class="mb-4 fs-5"></div>
+                    <div id="sceneChoices" class="d-flex flex-wrap gap-2"></div>
+                </div>
+
+                <div class="glass-card mt-4" id="commentsSection">
+                    <h5><i class="bi bi-star"></i> Оценить новеллу</h5>
+                    <div id="ratingStars" class="mb-3 fs-2">
+                        ★ ★ ★ ★ ★
+                    </div>
+                    <hr>
+                    <h5><i class="bi bi-chat"></i> Комментарии</h5>
+                    <div id="commentsList"></div>
+                    <div id="commentForm" style="display: none;">
+                        <textarea id="commentText" class="form-control mb-2" rows="2" placeholder="Поделитесь впечатлениями..."></textarea>
+                        <button class="btn btn-primary" id="submitCommentBtn">Отправить</button>
+                    </div>
+                    <div id="loginToComment" class="alert alert-info" style="display: none;">
+                        <a href="login.html">Войдите</a>, чтобы оставить комментарий и оценить новеллу
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <footer class="mt-4">
+            <small>© 2025 NovelForge</small>
+        </footer>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/novels.js"></script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const novelId = urlParams.get('id');
+        let novel = null;
+        let currentSceneId = null;
+        let currentUser = null;
+        
+        async function init() {
+            currentUser = getCurrentUser();
+            const novels = getNovels();
+            novel = novels.find(n => n.id === novelId);
+            
+            if (!novel) {
+                document.getElementById("readerContainer").innerHTML = '<div class="text-center">Новелла не найдена</div>';
+                return;
+            }
+            
+            document.title = `${novel.title} — NovelForge`;
+            
+            if (currentUser) {
+                const progress = getReadingProgress(novelId, currentUser.email);
+                currentSceneId = progress ? progress.sceneId : novel.startSceneId;
+            } else {
+                currentSceneId = novel.startSceneId;
+            }
+            
+            renderScene(currentSceneId);
+            renderComments();
+            renderRatingStars();
+            
+            if (currentUser) {
+                document.getElementById("commentForm").style.display = "block";
+                document.getElementById("loginToComment").style.display = "none";
+            } else {
+                document.getElementById("commentForm").style.display = "none";
+                document.getElementById("loginToComment").style.display = "block";
+            }
+        }
+        
+        function renderScene(sceneId) {
+            const scene = novel.scenes[sceneId];
+            if (!scene) return;
+            
+            if (currentUser) {
+                saveReadingProgress(novelId, sceneId, currentUser.email);
+            }
+            
+            updateProgressBar();
+            
+            const bgDiv = document.getElementById("sceneImage");
+            if (scene.backgroundImage) {
+                bgDiv.style.backgroundImage = `url(${scene.backgroundImage})`;
+                bgDiv.style.backgroundSize = "cover";
+                bgDiv.innerHTML = "";
+            } else {
+                bgDiv.style.backgroundImage = "none";
+                bgDiv.style.backgroundColor = scene.background || "#1a1a2e";
+            }
+            
+            document.getElementById("sceneDialogue").innerHTML = scene.character ? 
+                `<strong>${escapeHtml(scene.character)}:</strong> ${escapeHtml(scene.dialogue)}` : 
+                escapeHtml(scene.dialogue);
+            
+            const choicesDiv = document.getElementById("sceneChoices");
+            choicesDiv.innerHTML = "";
+            
+            if (scene.choices && scene.choices.length > 0) {
+                scene.choices.forEach(choice => {
+                    const btn = document.createElement("button");
+                    btn.className = "btn btn-outline-light";
+                    btn.innerHTML = choice.text;
+                    btn.onclick = () => {
+                        if (novel.scenes[choice.target]) {
+                            renderScene(choice.target);
+                        } else {
+                            alert(`Сцена "${choice.target}" не найдена`);
+                        }
+                    };
+                    choicesDiv.appendChild(btn);
+                });
+            } else {
+                const restartBtn = document.createElement("button");
+                restartBtn.className = "btn btn-warning";
+                restartBtn.innerHTML = "🏁 Начать сначала";
+                restartBtn.onclick = () => renderScene(novel.startSceneId);
+                choicesDiv.appendChild(restartBtn);
+            }
+        }
+        
+        function updateProgressBar() {
+            const scenesCount = Object.keys(novel.scenes).length;
+            const sceneIndex = Object.keys(novel.scenes).indexOf(currentSceneId);
+            const progress = ((sceneIndex + 1) / scenesCount) * 100;
+            document.getElementById("progressBar").style.display = "block";
+            document.getElementById("progressFill").style.width = `${progress}%`;
+        }
+        
+        function renderComments() {
+            const comments = getComments(novelId);
+            const container = document.getElementById("commentsList");
+            
+            if (comments.length === 0) {
+                container.innerHTML = '<p class="text-muted">Пока нет комментариев. Будьте первым!</p>';
+                return;
+            }
+            
+            container.innerHTML = comments.map(c => `
+                <div class="comment">
+                    <div class="comment-author">${escapeHtml(c.userName)}</div>
+                    <div class="small text-muted">${new Date(c.createdAt).toLocaleDateString()}</div>
+                    <div class="mt-2">${escapeHtml(c.comment)}</div>
+                </div>
+            `).join("");
+        }
+        
+        function renderRatingStars() {
+            const container = document.getElementById("ratingStars");
+            const currentRating = currentUser ? getUserRating(novelId, currentUser.email) : null;
+            
+            container.innerHTML = "";
+            for (let i = 1; i <= 5; i++) {
+                const star = document.createElement("span");
+                star.innerHTML = i <= (currentRating || 0) ? "★" : "☆";
+                star.style.cursor = currentUser ? "pointer" : "default";
+                star.style.color = "#ffc107";
+                star.style.fontSize = "32px";
+                if (currentUser) {
+                    star.onclick = () => rateNovel(novelId, i, currentUser.email);
+                }
+                container.appendChild(star);
+            }
+            
+            if (novel.rating > 0) {
+                const ratingDiv = document.createElement("div");
+                ratingDiv.className = "mt-2";
+                ratingDiv.innerHTML = `<small>Средняя оценка: ${novel.rating.toFixed(1)} (${novel.ratingsCount} оценок)</small>`;
+                container.appendChild(ratingDiv);
+            }
+        }
+        
+        document.getElementById("submitCommentBtn")?.addEventListener("click", () => {
+            if (!currentUser) {
+                alert("Войдите, чтобы оставить комментарий");
+                return;
+            }
+            const text = document.getElementById("commentText").value.trim();
+            if (text) {
+                addComment(novelId, currentUser.email, currentUser.name, text);
+                document.getElementById("commentText").value = "";
+                renderComments();
+            }
+        });
+        
+        function escapeHtml(str) {
+            if (!str) return "";
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
+        
+        init();
+    </script>
+</body>
+</html>

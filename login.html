@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вход — NovelForge</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="text-center mb-4">
+            <h1 class="text-white"><i class="bi bi-box-arrow-in-right"></i> NovelForge</h1>
+            <p class="text-white-50">Войдите, чтобы продолжить работу</p>
+        </div>
+
+        <div class="nav-links">
+            <a href="index.html">Главная</a>
+            <a href="login.html">Вход</a>
+            <a href="register.html">Регистрация</a>
+        </div>
+
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="glass-card">
+                    <h3 class="text-center mb-4"></i> Вход в аккаунт</h3>
+                    
+                    <form id="loginForm">
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-control" id="loginEmail" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Пароль</label>
+                            <input type="password" class="form-control" id="loginPassword" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100" id="loginBtn">
+                            <i class="bi bi-box-arrow-in-right"></i> Войти
+                        </button>
+                    </form>
+                    <div id="loginMessage" class="mt-3 text-center"></div>
+                    <hr>
+                    <p class="text-muted small text-center">
+                        Нет аккаунта? <a href="register.html">Зарегистрируйтесь</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <small>© 2025 NovelForge — конструктор визуальных новелл</small>
+        </footer>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        if (isUserLoggedIn()) {
+            const redirect = localStorage.getItem("redirectAfterLogin") || "editor.html";
+            localStorage.removeItem("redirectAfterLogin");
+            window.location.href = redirect;
+        }
+        
+        const loginForm = document.getElementById("loginForm");
+        const loginBtn = document.getElementById("loginBtn");
+        
+        loginForm.addEventListener("submit", async function(e) {
+            e.preventDefault();
+            
+            loginBtn.disabled = true;
+            loginBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Вход...';
+            
+            const email = document.getElementById("loginEmail").value.trim();
+            const password = document.getElementById("loginPassword").value;
+            
+            if (!email || !password) {
+                showMessage("Заполните все поля!", "danger");
+                loginBtn.disabled = false;
+                loginBtn.innerHTML = '<i class="bi bi-box-arrow-in-right"></i> Войти';
+                return;
+            }
+            
+            try {
+                const success = await loginUser(email, password);
+                
+                if (success) {
+                    showMessage("Вход выполнен успешно! Перенаправление...", "success");
+                    
+                    const redirect = localStorage.getItem("redirectAfterLogin") || "editorNovel.html";
+                    localStorage.removeItem("redirectAfterLogin");
+                    
+                    setTimeout(() => {
+                        window.location.href = redirect;
+                    }, 1000);
+                } else {
+                    showMessage("Неверный email или пароль!", "danger");
+                    loginBtn.disabled = false;
+                    loginBtn.innerHTML = '<i class="bi bi-box-arrow-in-right"></i> Войти';
+                }
+            } catch (error) {
+                console.error("Ошибка входа:", error);
+                showMessage("Произошла ошибка при входе. Попробуйте ещё раз.", "danger");
+                loginBtn.disabled = false;
+                loginBtn.innerHTML = '<i class="bi bi-box-arrow-in-right"></i> Войти';
+            }
+        });
+        
+        function showMessage(msg, type) {
+            const messageDiv = document.getElementById("loginMessage");
+            messageDiv.innerHTML = `<div class="alert alert-${type}">${msg}</div>`;
+            setTimeout(() => messageDiv.innerHTML = "", 3000);
+        }
+    </script>
+</body>
+</html>
