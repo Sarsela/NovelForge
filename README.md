@@ -12,3 +12,37 @@
 [![SonarQube Cloud](https://sonarcloud.io/images/project_badges/sonarcloud-dark.svg)](https://sonarcloud.io/summary/new_code?id=Sarsela_NovelForge)
 ---
 
+graph TB
+    subgraph NovelForge
+        %% Актёры
+        Guest((Неавторизованный))
+        Reader((Читатель))
+        Author((Автор))
+        
+        %% Гость
+        Guest --> |Просмотр каталога| UC1[Просмотр списка новелл]
+        Guest --> |Поиск| UC2[Поиск по названию]
+        Guest --> |Фильтрация| UC3[Фильтрация по жанру]
+        Guest --> |Сортировка| UC4[Сортировка]
+        Guest --> |Регистрация| UC5[Регистрация]
+        Guest --> |Вход| UC6[Вход в систему]
+        
+        %% Читатель
+        Reader --> |Чтение сцены| UC7[Просмотр сцены]
+        Reader --> |Выбор| UC8[Выбор варианта]
+        Reader --> |Прогресс| UC9[Автосохранение]
+        Reader --> |Оценка| UC10[Поставить оценку]
+        Reader --> |Комментарий| UC11[Оставить комментарий]
+        
+        %% Автор
+        Author --> |Создание| UC12[Создание новеллы]
+        Author --> |Сцены| UC13[Добавление сцены]
+        Author --> |Редактирование| UC14[Редактирование сцены]
+        Author --> |Выборы| UC15[Добавление выбора]
+        Author --> |Предпросмотр| UC16[Предпросмотр]
+        Author --> |Публикация| UC17[Публикация]
+        Author --> |Экспорт| UC18[Экспорт в JSON]
+    end
+    
+    Reader -.-> |наследует| Guest
+    Author -.-> |наследует| Reader
