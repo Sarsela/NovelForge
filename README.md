@@ -8,5 +8,5 @@
 [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=Sarsela_NovelForge&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=Sarsela_NovelForge)
 [![Code Smells](https://sonarcloud.io/api/project_badges/measure?project=Sarsela_NovelForge&metric=code_smells)](https://sonarcloud.io/summary/new_code?id=Sarsela_NovelForge)
 [![Duplicated Lines (%)](https://sonarcloud.io/api/project_badges/measure?project=Sarsela_NovelForge&metric=duplicated_lines_density)](https://sonarcloud.io/summary/new_code?id=Sarsela_NovelForge)
-br
+---
 [![SonarQube Cloud](https://sonarcloud.io/images/project_badges/sonarcloud-dark.svg)](https://sonarcloud.io/summary/new_code?id=Sarsela_NovelForge)
