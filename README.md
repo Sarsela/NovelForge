@@ -11,4 +11,4 @@
 ---
 [![SonarQube Cloud](https://sonarcloud.io/images/project_badges/sonarcloud-dark.svg)](https://sonarcloud.io/summary/new_code?id=Sarsela_NovelForge)
 ---
-![Use-Case Diagram](images/use-case-diagram.png)
+
